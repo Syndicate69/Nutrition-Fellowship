@@ -1,0 +1,165 @@
+{
+  "entities": {
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Represents an authorized administrator of the Nutrition Fellowship CMS.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the administrator.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "role": {
+          "type": "string",
+          "description": "Role identifier for the administrator.",
+          "enum": ["admin"],
+          "minLength": 5,
+          "maxLength": 16
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the admin record was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the admin record was last updated."
+        }
+      },
+      "required": ["uid", "role", "createdAt", "updatedAt"]
+    },
+    "CmsManifest": {
+      "title": "CmsManifest",
+      "description": "Ordered manifest of active item document IDs for a specific website section.",
+      "type": "object",
+      "properties": {
+        "sectionId": {
+          "type": "string",
+          "description": "Identifier of the website section (e.g., hero, highlights, initiatives, resources, recent_events, upcoming_events, announcements, testimonials, team).",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "itemIds": {
+          "type": "array",
+          "description": "Bounded list (max 25) of CmsItem document IDs belonging to this section in display order."
+        },
+        "authorId": {
+          "type": "string",
+          "description": "UID of the admin who created the manifest.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update."
+        }
+      },
+      "required": ["sectionId", "itemIds", "authorId", "createdAt", "updatedAt"]
+    },
+    "CmsItem": {
+      "title": "CmsItem",
+      "description": "Individual content item for a website section (slide, highlight, initiative, resource document, event, testimonial, or team member).",
+      "type": "object",
+      "properties": {
+        "sectionId": {
+          "type": "string",
+          "description": "Parent section manifest ID that this item belongs to.",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Primary title, name, or topic of the item.",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "subtitle": {
+          "type": "string",
+          "description": "Role, date, or secondary heading of the item.",
+          "minLength": 0,
+          "maxLength": 300
+        },
+        "description": {
+          "type": "string",
+          "description": "Body copy, full keynote speech text, quote, biography, or details of the item.",
+          "minLength": 0,
+          "maxLength": 25000
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "Image path, external image URL, or compressed data URL.",
+          "minLength": 0,
+          "maxLength": 300000
+        },
+        "linkUrl": {
+          "type": "string",
+          "description": "External link URL or PDF path.",
+          "minLength": 0,
+          "maxLength": 1000
+        },
+        "category": {
+          "type": "string",
+          "description": "Category label (e.g., Reports, Policies and Plans, Blogs, Researches, or local PDF flag).",
+          "minLength": 0,
+          "maxLength": 120
+        },
+        "authorId": {
+          "type": "string",
+          "description": "UID of the admin who created the item.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update."
+        }
+      },
+      "required": [
+        "sectionId",
+        "title",
+        "subtitle",
+        "description",
+        "imageUrl",
+        "linkUrl",
+        "category",
+        "authorId",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Stores verified administrator UIDs for RBAC enforcement."
+    },
+    "/cms_manifests/{manifestId}": {
+      "schema": { "$ref": "#/entities/CmsManifest" },
+      "description": "Stores the ordered list of active CmsItem IDs for each website section."
+    },
+    "/cms_items/{itemId}": {
+      "schema": { "$ref": "#/entities/CmsItem" },
+      "description": "Stores individual content items referenced by a CmsManifest."
+    }
+  }
+}

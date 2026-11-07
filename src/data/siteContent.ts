@@ -10,6 +10,8 @@ export interface HighlightItem {
   topic: string;
   description: string;
   link: string;
+  fullText?: string;
+  isSpeech?: boolean;
 }
 
 export interface InitiativeItem {
@@ -51,9 +53,26 @@ export interface AnnouncementItem {
   details: string;
 }
 
+export interface TestimonialItem {
+  id: number;
+  name: string;
+  role: string;
+  photo: string;
+  description: string;
+}
+
+export interface TeamMemberItem {
+  id: number;
+  name: string;
+  role: string;
+  photo: string;
+  description: string;
+  group?: 'Guidance Group' | 'Core Group';
+}
+
 export const SITE_BRAND = {
   title: 'Nutrition Fellowship',
-  logoPrimary: '/nutrition_logo333.png',
+  logoPrimary: '/Nutrition_logo333.png',
   logoPrimaryAlt: 'Nutrition Logo',
   logoFooter: '/Nutrition_logo33.png',
   logoFooterAlt: 'Company Logo',
@@ -62,16 +81,19 @@ export const SITE_BRAND = {
   social: {
     facebook: 'https://www.facebook.com/nutfellowship/',
     instagram: 'https://www.instagram.com/nutfellowship/?hl=en',
+    linkedin: 'https://www.linkedin.com/in/nutfellowship/',
     twitter: 'https://x.com/nutfellowship',
   },
 };
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: 'HOME', href: '/', sectionId: 'home' },
-  { label: 'ABOUT US', href: '#aboutus', sectionId: 'aboutus' },
+  { label: 'HOME', href: '#home', sectionId: 'home' },
+  { label: 'KEY HIGHLIGHTS', href: '#aboutus', sectionId: 'aboutus' },
   { label: 'PROJECTS AND INITIATIVES', href: '#initiatives', sectionId: 'initiatives' },
   { label: 'RESOURCES', href: '#documents', sectionId: 'documents' },
   { label: 'EVENTS AND UPDATES', href: '#events', sectionId: 'events' },
+  { label: 'TESTIMONIALS', href: '#testimonials', sectionId: 'testimonials' },
+  { label: 'OUR TEAM', href: '#team', sectionId: 'team' },
   { label: 'CONTACT US', href: '#thoughts', sectionId: 'thoughts' },
 ];
 
@@ -130,6 +152,9 @@ export const KEY_HIGHLIGHTS: HighlightItem[] = [
     topic: 'Dr. RP Bichha Speech',
     description: 'The speech given by Dr. RP Bichha at the 2nd Nutrition Fellowship meeting',
     link: 'https://youtu.be/YxI-8DVWIQQ?si=tb7y2lsEyLm8_31v',
+    isSpeech: true,
+    fullText:
+      'Keynote address delivered by Dr. RP Bichha at the 2nd Nutrition Fellowship for Nepal meeting.\n\nIn this address, Dr. RP Bichha emphasized the critical role of national multi-sectoral nutrition policies, strengthening community health systems, and uniting experienced public health leaders with emerging youth fellows to eliminate undernutrition across all provinces of Nepal.\n\n(You can edit or paste the complete verbatim transcript of this speech anytime from the Admin Panel -> Keynote Speeches section.)',
   },
   {
     id: 4,
@@ -137,6 +162,9 @@ export const KEY_HIGHLIGHTS: HighlightItem[] = [
     topic: 'Miriam Krantz Speech',
     description: 'The speech given by Miriam Krantz at the 2nd Nutrition Fellowship meeting',
     link: 'https://youtu.be/YxI-8DVWIQQ?si=tb7y2lsEyLm8_31v',
+    isSpeech: true,
+    fullText:
+      'Keynote reflection delivered by Miriam Krantz at the 2nd Nutrition Fellowship for Nepal meeting.\n\nMiriam Krantz shared her decades of foundational experience working with Nepali families and communities, highlighting how practical, locally rooted nutrition education and intergenerational mentorship continue to transform maternal and child health in Nepal.\n\n(You can edit or paste the complete verbatim transcript of this speech anytime from the Admin Panel -> Keynote Speeches section.)',
   },
   {
     id: 5,
@@ -144,6 +172,9 @@ export const KEY_HIGHLIGHTS: HighlightItem[] = [
     topic: 'Dr. RK Adhikari Speech',
     description: 'The speech given by Dr. Ramesh K Adhikari at the 2nd Nutrition Fellowship meeting',
     link: 'https://youtu.be/YxI-8DVWIQQ?si=tb7y2lsEyLm8_31v',
+    isSpeech: true,
+    fullText:
+      'Keynote address delivered by Dr. Ramesh K Adhikari at the 2nd Nutrition Fellowship for Nepal meeting.\n\nDr. Ramesh K Adhikari reflected on the evolution of nutrition research, clinical training, and academic mentorship in Nepal, calling on third-generation fellows and students to lead evidence-based advocacy and collaborative action.\n\n(You can edit or paste the complete verbatim transcript of this speech anytime from the Admin Panel -> Keynote Speeches section.)',
   },
 ];
 
@@ -302,6 +333,90 @@ export const ANNOUNCEMENTS: AnnouncementItem[] = [
     date: '01/17/2025',
     details:
       'We are excited for the gathering of hearts and minds dedicated to transforming nutrition in Nepal!',
+  },
+];
+
+export const TESTIMONIALS: TestimonialItem[] = [
+  {
+    id: 1,
+    name: 'Full Name Placeholder',
+    role: 'Senior Nutrition Specialist · First Generation',
+    photo: '',
+    description:
+      'Add testimonial or reflection here—share how the Nutrition Fellowship connects generations of practitioners, researchers, and students to advance nutrition outcomes in Nepal.',
+  },
+  {
+    id: 2,
+    name: 'Full Name Placeholder',
+    role: 'Public Health Researcher · Second Generation',
+    photo: '',
+    description:
+      'Add testimonial or reflection here—highlight collaborative initiatives, policy dialogues, and mentorship experiences fostered through the fellowship.',
+  },
+  {
+    id: 3,
+    name: 'Full Name Placeholder',
+    role: 'Nutrition Student Fellow · Third Generation',
+    photo: '',
+    description:
+      'Add testimonial or reflection here—describe the impact of Nutrition Data Camps, workshops, and intergenerational learning opportunities.',
+  },
+];
+
+export const TEAM_MEMBERS: TeamMemberItem[] = [
+  {
+    id: 1,
+    name: 'Senior Professional Name',
+    role: 'Senior Nutrition & Public Health Advisor',
+    photo: '',
+    group: 'Guidance Group',
+    description:
+      'Short biography and description placeholder for a senior professional in the Guidance Group providing strategic direction and mentorship to the Nutrition Fellowship.',
+  },
+  {
+    id: 2,
+    name: 'Senior Professional Name',
+    role: 'Senior Policy & Research Mentor',
+    photo: '',
+    group: 'Guidance Group',
+    description:
+      'Short biography and description placeholder for a senior professional in the Guidance Group guiding multi-generational collaboration and nutrition policy dialogue.',
+  },
+  {
+    id: 3,
+    name: 'Senior Professional Name',
+    role: 'Senior Clinical & Community Nutritionist',
+    photo: '',
+    group: 'Guidance Group',
+    description:
+      'Short biography and description placeholder for a senior professional in the Guidance Group supporting fellowship initiatives and capacity building across Nepal.',
+  },
+  {
+    id: 4,
+    name: 'Team Member Name',
+    role: 'Program Coordinator',
+    photo: '',
+    group: 'Core Group',
+    description:
+      'Leads overall program coordination, fellowship convenings, and multi-stakeholder partnerships within the Core Working Group.',
+  },
+  {
+    id: 5,
+    name: 'Team Member Name',
+    role: 'Program Officer',
+    photo: '',
+    group: 'Core Group',
+    description:
+      'Manages day-to-day fellowship operations, Nutrition Data Camps, student engagement, and field implementation within the Core Working Group.',
+  },
+  {
+    id: 6,
+    name: 'Team Member Name',
+    role: 'Advocacy Coordinator',
+    photo: '',
+    group: 'Core Group',
+    description:
+      'Drives nutrition policy advocacy, communications, and youth-led campaigns across colleges and communities within the Core Working Group.',
   },
 ];
 

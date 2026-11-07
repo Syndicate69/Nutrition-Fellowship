@@ -1,10 +1,11 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { ArrowUpRight } from 'lucide-react';
-import { INITIATIVES } from '../data/siteContent';
+import { useSiteContent } from '../context/SiteContentContext';
 import { ResilientImage } from './ResilientImage';
 
 export const InitiativesSection: React.FC = () => {
+  const { initiatives } = useSiteContent();
   return (
     <section
       id="initiatives"
@@ -36,7 +37,7 @@ export const InitiativesSection: React.FC = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-12">
-          {INITIATIVES.map((item, index) => (
+          {initiatives.map((item, index) => (
             <motion.a
               key={item.title}
               href={item.link}

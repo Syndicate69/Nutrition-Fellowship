@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Download, FileText, Eye, ArrowUpRight } from 'lucide-react';
-import {
-  DOCUMENTS_REPOSITORY,
-  DocumentLink,
-} from '../data/siteContent';
+import { DocumentLink } from '../data/siteContent';
+import { useSiteContent } from '../context/SiteContentContext';
 import {
   filterDocumentsByCategory,
   getDownloadFilename,
@@ -17,15 +15,16 @@ interface ResourcesSectionProps {
 export const ResourcesSection: React.FC<ResourcesSectionProps> = ({
   onOpenDocument,
 }) => {
+  const { documentsRepository } = useSiteContent();
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   const categoryTabs = [
     'All',
-    ...DOCUMENTS_REPOSITORY.map((c) => c.category),
+    ...documentsRepository.map((c) => c.category),
   ];
 
   const filteredCategories = filterDocumentsByCategory(
-    DOCUMENTS_REPOSITORY,
+    documentsRepository,
     selectedCategory
   );
 

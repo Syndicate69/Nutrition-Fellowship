@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Download, Calendar, FileText } from 'lucide-react';
 import {
@@ -17,12 +17,18 @@ import { HeroAndHighlights } from './components/HeroAndHighlights';
 import { InitiativesSection } from './components/InitiativesSection';
 import { ResourcesSection } from './components/ResourcesSection';
 import { EventsSection } from './components/EventsSection';
+import { TeamAndTestimonialsSection } from './components/TeamAndTestimonialsSection';
 import { ThoughtsSection } from './components/ThoughtsSection';
 import { Footer } from './components/Footer';
 import { ResilientImage } from './components/ResilientImage';
+import { SiteContentProvider } from './context/SiteContentContext';
+import { AdminModal } from './components/AdminModal';
 
 export default function App() {
   const [activeSection, setActiveSection] = useState<string>('home');
+  const [isAdminOpen, setIsAdminOpen] = useState<boolean>(false);
+  const isProgrammaticScrollRef = useRef<boolean>(false);
+  const scrollLockTimerRef = useRef<number | null>(null);
   const [inspectedImage, setInspectedImage] = useState<{
     src: string;
     alt: string;
@@ -36,21 +42,46 @@ export default function App() {
     null
   );
 
-  // Automatic Scroll-Spy to update active nav link fluidly as the user scrolls
+  // Open Admin Panel automatically if URL hash is #admin
+  useEffect(() => {
+    const checkHash = () => {
+      if (window.location.hash === '#admin') {
+        setIsAdminOpen(true);
+      }
+    };
+    checkHash();
+    window.addEventListener('hashchange', checkHash);
+    return () => window.removeEventListener('hashchange', checkHash);
+  }, []);
+
+  // Automatic Scroll-Spy synchronized with viewport reading zone
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY < 160) {
+      if (isProgrammaticScrollRef.current) return;
+
+      if (window.scrollY < 100) {
         setActiveSection('home');
         return;
       }
-      const sectionIds = NAV_ITEMS.map((item) => item.sectionId).filter(
-        (id) => id !== 'home'
-      );
+
+      // If scrolled near the very bottom of the document, activate the final section (Contact Us)
+      const isNearBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 80;
+      if (isNearBottom) {
+        setActiveSection(NAV_ITEMS[NAV_ITEMS.length - 1].sectionId);
+        return;
+      }
+
+      // Detect which section currently occupies the upper-middle reading zone of the screen
+      const triggerLine = Math.max(150, window.innerHeight * 0.36);
+      const sectionIds = NAV_ITEMS.map((item) => item.sectionId);
+
       for (let i = sectionIds.length - 1; i >= 0; i--) {
         const el = document.getElementById(sectionIds[i]);
         if (el) {
           const rect = el.getBoundingClientRect();
-          if (rect.top <= 180) {
+          if (rect.top <= triggerLine) {
             setActiveSection(sectionIds[i]);
             return;
           }
@@ -64,6 +95,14 @@ export default function App() {
 
   const handleNavigate = (href: string, sectionId: string) => {
     setActiveSection(sectionId);
+    isProgrammaticScrollRef.current = true;
+    if (scrollLockTimerRef.current) {
+      window.clearTimeout(scrollLockTimerRef.current);
+    }
+    scrollLockTimerRef.current = window.setTimeout(() => {
+      isProgrammaticScrollRef.current = false;
+    }, 750);
+
     if (href === '/' || sectionId === 'home') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
@@ -76,26 +115,38 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F7F9F7] text-[#0F1C12]">
-      <Header activeSection={activeSection} onNavigate={handleNavigate} />
+    <SiteContentProvider>
+      <div className="min-h-screen flex flex-col bg-[#F7F9F7] text-[#0F1C12]">
+        <Header activeSection={activeSection} onNavigate={handleNavigate} />
 
-      <main className="flex-1">
-        <HeroAndHighlights
-          onInspectImage={(img) => setInspectedImage(img)}
-        />
-        <InitiativesSection />
-        <ResourcesSection
-          onOpenDocument={(doc, category) =>
-            setSelectedDocument({ doc, category })
-          }
-        />
-        <EventsSection
-          onSelectEvent={(eventItem) => setSelectedEvent(eventItem)}
-        />
-        <ThoughtsSection />
-      </main>
+        <main className="flex-1">
+          <HeroAndHighlights
+            onInspectImage={(img) => setInspectedImage(img)}
+          />
+          <InitiativesSection />
+          <ResourcesSection
+            onOpenDocument={(doc, category) =>
+              setSelectedDocument({ doc, category })
+            }
+          />
+          <EventsSection
+            onSelectEvent={(eventItem) => setSelectedEvent(eventItem)}
+          />
+          <TeamAndTestimonialsSection />
+          <ThoughtsSection />
+        </main>
 
-      <Footer />
+        <Footer onOpenAdmin={() => setIsAdminOpen(true)} />
+
+        <AdminModal
+          isOpen={isAdminOpen}
+          onClose={() => {
+            setIsAdminOpen(false);
+            if (window.location.hash === '#admin') {
+              window.history.replaceState(null, '', window.location.pathname);
+            }
+          }}
+        />
 
       {/* Animated Lightbox Modal for Cover Slider Photos */}
       <AnimatePresence>
@@ -284,6 +335,7 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </SiteContentProvider>
   );
 }

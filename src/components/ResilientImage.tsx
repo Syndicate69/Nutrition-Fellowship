@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Image as ImageIcon } from 'lucide-react';
 
 interface ResilientImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -17,6 +17,10 @@ export const ResilientImage: React.FC<ResilientImageProps> = ({
   ...rest
 }) => {
   const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
 
   if (hasError) {
     return (

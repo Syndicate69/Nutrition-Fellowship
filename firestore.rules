@@ -1,0 +1,185 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitive Helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isVerified() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == 'sth.rajon@gmail.com' ||
+        request.auth.token.email == 'nutfellowship@gmail.com'
+      );
+    }
+
+    // Validation Blueprint: AdminRecord
+    function isValidAdminRecord(data) {
+      return data.keys().hasAll(['uid', 'role', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'role', 'createdAt', 'updatedAt']) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.uid == request.auth.uid &&
+        data.role is string && data.role.size() == 5 && data.role == 'admin' &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: CmsManifest
+    function isValidCmsManifest(data) {
+      return data.keys().hasAll(['sectionId', 'itemIds', 'authorId', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['sectionId', 'itemIds', 'authorId', 'createdAt', 'updatedAt']) &&
+        data.sectionId is string && data.sectionId.size() >= 1 && data.sectionId.size() <= 64 && data.sectionId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.itemIds is list && data.itemIds.size() <= 25 &&
+        (data.itemIds.size() == 0 || (data.itemIds[0] is string && data.itemIds[0].size() >= 1 && data.itemIds[0].size() <= 128)) &&
+        data.authorId is string && data.authorId.size() >= 1 && data.authorId.size() <= 128 && data.authorId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.authorId == request.auth.uid &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: CmsItem
+    function isValidCmsItem(data) {
+      return data.keys().hasAll([
+          'sectionId',
+          'title',
+          'subtitle',
+          'description',
+          'imageUrl',
+          'linkUrl',
+          'category',
+          'authorId',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'sectionId',
+          'title',
+          'subtitle',
+          'description',
+          'imageUrl',
+          'linkUrl',
+          'category',
+          'authorId',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.sectionId is string && data.sectionId.size() >= 1 && data.sectionId.size() <= 64 && data.sectionId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 300 &&
+        data.subtitle is string && data.subtitle.size() <= 300 &&
+        data.description is string && data.description.size() <= 25000 &&
+        data.imageUrl is string && data.imageUrl.size() <= 300000 &&
+        data.linkUrl is string && data.linkUrl.size() <= 1000 &&
+        data.category is string && data.category.size() <= 120 &&
+        data.authorId is string && data.authorId.size() >= 1 && data.authorId.size() <= 128 && data.authorId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.authorId == request.auth.uid &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // Collection: /admins/{adminId}
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && isValidId(adminId) && request.auth.uid == adminId;
+      allow list: if false;
+      allow create: if isSignedIn() &&
+        isValidId(adminId) &&
+        adminId == request.auth.uid &&
+        isValidAdminRecord(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        isAdmin();
+      allow update: if isSignedIn() &&
+        isValidId(adminId) &&
+        adminId == request.auth.uid &&
+        isValidAdminRecord(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['updatedAt']) &&
+        isAdmin();
+      allow delete: if false;
+    }
+
+    // Collection: /cms_manifests/{manifestId}
+    match /cms_manifests/{manifestId} {
+      allow get: if isValidId(manifestId);
+      allow list: if false;
+      allow create: if isSignedIn() &&
+        isValidId(manifestId) &&
+        isValidCmsManifest(incoming()) &&
+        incoming().sectionId == manifestId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        isAdmin();
+      allow update: if isSignedIn() &&
+        isValidId(manifestId) &&
+        isValidCmsManifest(incoming()) &&
+        incoming().sectionId == existing().sectionId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          incoming().diff(existing()).affectedKeys().hasOnly(['itemIds', 'authorId', 'updatedAt']) ||
+          isAdmin()
+        ) &&
+        isAdmin();
+      allow delete: if isSignedIn() && isValidId(manifestId) && isAdmin();
+    }
+
+    // Collection: /cms_items/{itemId}
+    match /cms_items/{itemId} {
+      allow get: if isValidId(itemId);
+      allow list: if false;
+      allow create: if isSignedIn() &&
+        isValidId(itemId) &&
+        isValidCmsItem(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        isAdmin() &&
+        exists(/databases/$(database)/documents/cms_manifests/$(incoming().sectionId));
+      allow update: if isSignedIn() &&
+        isValidId(itemId) &&
+        isValidCmsItem(incoming()) &&
+        incoming().sectionId == existing().sectionId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'title',
+            'subtitle',
+            'description',
+            'imageUrl',
+            'linkUrl',
+            'category',
+            'authorId',
+            'updatedAt'
+          ]) ||
+          isAdmin()
+        ) &&
+        isAdmin() &&
+        exists(/databases/$(database)/documents/cms_manifests/$(incoming().sectionId));
+      allow delete: if isSignedIn() && isValidId(itemId) && isAdmin();
+    }
+  }
+}

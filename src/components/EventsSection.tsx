@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight, Calendar, ArrowRight } from 'lucide-react';
-import {
-  ANNOUNCEMENTS,
-  RECENT_EVENTS,
-  RecentEventItem,
-  UPCOMING_EVENTS,
-} from '../data/siteContent';
+import { RecentEventItem } from '../data/siteContent';
+import { useSiteContent } from '../context/SiteContentContext';
 import {
   getVisibleEventsWindow,
   stepCarouselIndex,
@@ -20,22 +16,23 @@ interface EventsSectionProps {
 export const EventsSection: React.FC<EventsSectionProps> = ({
   onSelectEvent,
 }) => {
+  const { recentEvents, upcomingEvents, announcements } = useSiteContent();
   const [startIndex, setStartIndex] = useState(0);
   const [showAllGrid, setShowAllGrid] = useState(false);
 
   const visibleDesktopEvents = showAllGrid
-    ? RECENT_EVENTS
-    : getVisibleEventsWindow(RECENT_EVENTS, startIndex, 4);
+    ? recentEvents
+    : getVisibleEventsWindow(recentEvents, startIndex, 4);
 
   const handlePrev = () => {
     setStartIndex((prev) =>
-      stepCarouselIndex(prev, -1, RECENT_EVENTS.length)
+      stepCarouselIndex(prev, -1, recentEvents.length)
     );
   };
 
   const handleNext = () => {
     setStartIndex((prev) =>
-      stepCarouselIndex(prev, 1, RECENT_EVENTS.length)
+      stepCarouselIndex(prev, 1, recentEvents.length)
     );
   };
 
@@ -74,7 +71,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
             >
               {showAllGrid
                 ? 'Carousel View (4)'
-                : `Show All ${RECENT_EVENTS.length} Events`}
+                : `Show All ${recentEvents.length} Events`}
             </button>
 
             {!showAllGrid && (
@@ -103,7 +100,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
         </motion.div>
 
         {/* Subheading: Recent Events + Index Pagination */}
-        <div className="mt-8 mb-6 flex items-center justify-between">
+        <div className="mt-8 mb-6 flex flex-wrap items-center justify-between gap-3">
           <h3 className="font-display text-2xl font-semibold text-[#265728]">
             Recent Events
           </h3>
@@ -113,78 +110,74 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
               role="tablist"
               aria-label="Event slides"
             >
-              {RECENT_EVENTS.map((ev, idx) => (
-                <button
-                  key={ev.id}
-                  type="button"
-                  onClick={() => setStartIndex(idx)}
-                  aria-label={`Slide ${idx + 1}: ${ev.review}`}
-                  className={`w-7 h-7 rounded-lg text-xs font-mono-tabular transition-colors cursor-pointer ${
-                    startIndex === idx
-                      ? 'bg-[#265728] text-white font-semibold'
-                      : 'bg-[#F2F6F2] text-[#3F5243] hover:bg-[#EAF2EA]'
-                  }`}
-                >
-                  {idx + 1}
-                </button>
-              ))}
+              {recentEvents.map((ev, idx) => {
+                const isActive = startIndex === idx;
+                return (
+                  <button
+                    key={ev.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => setStartIndex(idx)}
+                    aria-label={`Slide ${idx + 1}: ${ev.review}`}
+                    className={`relative w-7 h-7 rounded-lg text-xs font-mono-tabular transition-colors cursor-pointer flex items-center justify-center ${
+                      isActive
+                        ? 'bg-[#265728] text-white font-semibold shadow-2xs'
+                        : 'bg-[#F2F6F2] text-[#3F5243] hover:bg-[#EAF2EA]'
+                    }`}
+                  >
+                    {idx + 1}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
 
-        {/* Recent Events Editorial Photo Grid with Staggered Motion */}
-        <motion.div
-          layout
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16"
-        >
-          <AnimatePresence mode="popLayout">
-            {visibleDesktopEvents.map((eventItem, idx) => (
-              <motion.article
-                layout
-                key={`${eventItem.id}-${eventItem.date}`}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                viewport={{ once: true, amount: 0.05 }}
-                transition={{
-                  duration: 0.4,
-                  delay: idx * 0.04,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                className="bg-[#F7F9F7] border border-emerald-950/10 rounded-3xl overflow-hidden flex flex-col justify-between group hover:border-[#265728] hover:bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-              >
-                <div>
-                  <div className="relative aspect-16/11 w-full overflow-hidden bg-[#112314] border-b border-emerald-950/8">
-                    <ResilientImage
-                      src={eventItem.img}
-                      alt={eventItem.review}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  </div>
-                  <div className="p-6">
-                    <p className="font-mono-tabular text-xs font-semibold text-[#265728] mb-2">
-                      {eventItem.date}
-                    </p>
-                    <h4 className="font-display text-lg font-semibold text-[#0F1C12] leading-snug line-clamp-2">
-                      {eventItem.review}
-                    </h4>
-                  </div>
+        {/* Recent Events Editorial Photo Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          {visibleDesktopEvents.map((eventItem, idx) => (
+            <motion.article
+              key={`${showAllGrid ? 'all' : startIndex}-${eventItem.id}-${idx}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{
+                duration: 0.2,
+                ease: 'easeOut',
+              }}
+              className="bg-[#F7F9F7] border border-emerald-950/10 rounded-3xl overflow-hidden flex flex-col justify-between group hover:border-[#265728] hover:bg-white transition-colors duration-300 hover:shadow-lg"
+            >
+              <div>
+                <div className="relative aspect-16/11 w-full overflow-hidden bg-[#112314] border-b border-emerald-950/8">
+                  <ResilientImage
+                    src={eventItem.img}
+                    alt={eventItem.review}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
                 </div>
+                <div className="p-6">
+                  <p className="font-mono-tabular text-xs font-semibold text-[#265728] mb-2">
+                    {eventItem.date}
+                  </p>
+                  <h4 className="font-display text-lg font-semibold text-[#0F1C12] leading-snug line-clamp-2">
+                    {eventItem.review}
+                  </h4>
+                </div>
+              </div>
 
-                <div className="px-6 pb-6 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => onSelectEvent(eventItem)}
-                    className="w-full py-2.5 px-4 rounded-xl bg-white border border-emerald-950/12 group-hover:bg-[#265728] group-hover:border-[#265728] group-hover:text-white text-[#0F1C12] text-xs font-semibold transition-colors flex items-center justify-between cursor-pointer whitespace-nowrap shrink-0"
-                  >
-                    <span>Read More</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </motion.article>
-            ))}
-          </AnimatePresence>
-        </motion.div>
+              <div className="px-6 pb-6 pt-2">
+                <button
+                  type="button"
+                  onClick={() => onSelectEvent(eventItem)}
+                  className="w-full py-2.5 px-4 rounded-xl bg-white border border-emerald-950/12 group-hover:bg-[#265728] group-hover:border-[#265728] group-hover:text-white text-[#0F1C12] text-xs font-semibold transition-colors flex items-center justify-between cursor-pointer whitespace-nowrap shrink-0"
+                >
+                  <span>Read More</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </motion.article>
+          ))}
+        </div>
 
         {/* Two-Column Split: Upcoming Events & Announcements */}
         <motion.div
@@ -200,9 +193,9 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
               Upcoming Events
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {UPCOMING_EVENTS.map((event) => (
+              {upcomingEvents.map((event, idx) => (
                 <div
-                  key={event.name}
+                  key={`${event.name}-${idx}`}
                   className="bg-[#F7F9F7] border border-emerald-950/10 rounded-3xl p-6 flex flex-col justify-between"
                 >
                   <div>
@@ -228,9 +221,9 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
               Announcements
             </h3>
             <div className="space-y-4">
-              {ANNOUNCEMENTS.map((announcement) => (
+              {announcements.map((announcement, idx) => (
                 <div
-                  key={announcement.title}
+                  key={`${announcement.title}-${idx}`}
                   className="bg-[#EAF2EA] border border-[#265728]/25 rounded-3xl p-6"
                 >
                   <p className="text-xs font-mono-tabular text-[#265728] font-semibold flex items-center gap-1.5 mb-2">
